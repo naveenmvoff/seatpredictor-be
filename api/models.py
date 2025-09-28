@@ -1,6 +1,6 @@
 from django.db import models
 
-class CounsellingSeatAllotmentTracker(models.Model):
+class NeetCounsellingSeatAllotmentTracker(models.Model):
     seqno = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -16,7 +16,7 @@ class CounsellingSeatAllotmentTracker(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "COUNSELLING_SEAT_ALLOTMENT_TRACKER"
+        db_table = "NEET_COUNSELLING_SEAT_ALLOTMENT_TRACKER" 
 
     def __str__(self):
         return f"{self.name} ({self.rank_no})"
@@ -44,3 +44,12 @@ class NeetCounsellingSeatAllotment(models.Model):
 
     def __str__(self):
         return f"{self.rank_no} - {self.allotted_institute}"
+    
+
+
+class GroupCategory(models.Model):
+    group_name = models.CharField(max_length=255)
+    category_type = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = "group_category_dropdown"

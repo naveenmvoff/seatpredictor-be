@@ -10,7 +10,7 @@ __pycache__/
 
 # Virtual environment
 venv/
-venvseatpredictor/
+venvneet/
 ENV/
 env/
 .venv/
