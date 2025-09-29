@@ -9,6 +9,13 @@ from operator import itemgetter
 
 from .models import GroupCategory
 
+from django.core.mail import EmailMultiAlternatives
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import json
+
+
 
 @api_view(['POST'])         ####### ============ For Testing Only ============
 def create_allotment(request):
@@ -111,3 +118,44 @@ class GroupCategoryListAPIView(APIView):
             grouped.append({"group_name": group_name, "category_type": types})
 
         return Response(grouped, status=status.HTTP_200_OK)
+    
+    
+    
+
+@csrf_exempt
+def send_results_email(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            recipient = data.get("email")
+            results = data.get("results", [])
+
+            # Build HTML table
+            body = "<h3>NEET PG Results</h3><table border='1' cellspacing='0' cellpadding='5'>"
+            body += "<tr><th>Sr. No</th><th>Rank</th><th>College</th><th>State</th><th>Category</th></tr>"
+            for i, r in enumerate(results, 1):
+                body += f"""
+                <tr>
+                  <td>{i}</td>
+                  <td>{r.get('rank_no') or r.get('rank')}</td>
+                  <td>{r.get('allotted_institute') or r.get('name')}</td>
+                  <td>{r.get('state')}</td>
+                  <td>{r.get('candidate_category') or r.get('category')}</td>
+                </tr>
+                """
+            body += "</table>"
+
+            # Create email
+            msg = EmailMultiAlternatives(
+                subject="Your NEET PG Seat Predictor Results",
+                body="Please view your results below.",  # fallback text
+                from_email=None,
+                to=[recipient],
+            )
+            msg.attach_alternative(body, "text/html")
+            msg.send()
+
+            return JsonResponse({"status": "success", "message": "Email sent!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
