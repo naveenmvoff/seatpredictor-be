@@ -20,15 +20,15 @@ from django.urls import include, path
 
 # Admin-only API for updating active year
 from api.admin.year_update import set_active_allotment_year
+from api.admin.user_data import get_all_tracker_data, get_tracker_stats
 
 
 urlpatterns = [
-    # Custom admin endpoint must come before the default admin URLs
+    # Custom admin endpoints must come before the default admin URLs
     path("admin/year-update/", set_active_allotment_year, name="admin_set_active_allotment_year"),
+    path("admin/user-data/", get_all_tracker_data, name="admin_get_all_tracker_data"),
+    path("admin/user-data/stats/", get_tracker_stats, name="admin_get_tracker_stats"),
 
     path("admin/", admin.site.urls),
     path('api/', include('api.urls')),
-    
-    path("", include("api.urls")),
-   
 ]
