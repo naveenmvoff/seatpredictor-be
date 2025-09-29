@@ -7,3 +7,4 @@ drf-yasg
 django-cors-headers
 pandas
 openpyxl
+django-cors-headers
