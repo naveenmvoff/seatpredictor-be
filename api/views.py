@@ -131,7 +131,7 @@ def send_results_email(request):
             results = data.get("results", [])
 
             # Build HTML table
-            body = "<h3>NEET PG Results</h3><table border='1' cellspacing='0' cellpadding='5'>"
+            body = "<h3>NEET Results</h3><table border='1' cellspacing='0' cellpadding='5'>"
             body += "<tr><th>Sr. No</th><th>Rank</th><th>College</th><th>State</th><th>Category</th></tr>"
             for i, r in enumerate(results, 1):
                 body += f"""
@@ -147,7 +147,7 @@ def send_results_email(request):
 
             # Create email
             msg = EmailMultiAlternatives(
-                subject="Your NEET PG Seat Predictor Results",
+                subject="Your NEET Seat Predictor Results",
                 body="Please view your results below.",  # fallback text
                 from_email=None,
                 to=[recipient],
