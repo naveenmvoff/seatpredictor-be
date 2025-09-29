@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from .models import NeetCounsellingSeatAllotmentTracker, NeetCounsellingSeatAllotment
@@ -14,6 +14,14 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
+
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 
 
 
@@ -159,3 +167,105 @@ def send_results_email(request):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
     return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+
+
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@csrf_exempt
+def admin_register(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+    email = request.data.get("email")
+
+    if User.objects.filter(username=username).exists():
+        return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.create_user(username=username, password=password, email=email)
+
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        "message": "User created",
+        "id": user.id,
+        "username": user.username,
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+    })
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AdminLoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            data = response.data
+            return Response({
+                "message": "Login successful",
+                "user": request.data.get("username"),
+                "access": data["access"],
+                "refresh": data["refresh"]
+            })
+        return response
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AdminRefreshView(TokenRefreshView):
+    permission_classes = [AllowAny]
+
+
+
+
+
+
+
+
+@csrf_exempt
+def login_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        password = data.get("password")
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            # Issue JWT tokens
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse({
+                "message": "Login successful",
+                "id": user.id,
+                "username": user.username,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            })
+        return JsonResponse({"error": "Invalid credentials"}, status=400)
+
+    return JsonResponse({"error": "Invalid request"}, status=405)
+
+
+@csrf_exempt
+def register_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        password = data.get("password")
+        email = data.get("email")
+
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"error": "Username already taken"}, status=400)
+
+        user = User.objects.create_user(username=username, password=password, email=email)
+
+        # Generate JWT for new user
+        refresh = RefreshToken.for_user(user)
+        return JsonResponse({
+            "message": "User created",
+            "id": user.id,
+            "username": user.username,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        })
+
+    return JsonResponse({"error": "Invalid request"}, status=405)

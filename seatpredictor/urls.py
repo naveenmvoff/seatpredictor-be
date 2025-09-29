@@ -18,7 +18,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path 
 
+# Admin-only API for updating active year
+from api.admin.year_update import set_active_allotment_year
+
+
 urlpatterns = [
+    # Custom admin endpoint must come before the default admin URLs
+    path("admin/year-update/", set_active_allotment_year, name="admin_set_active_allotment_year"),
+
     path("admin/", admin.site.urls),
     path('api/', include('api.urls')),
+    
+    path("", include("api.urls")),
+   
 ]
